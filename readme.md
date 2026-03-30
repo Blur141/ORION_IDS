@@ -148,10 +148,4 @@ Use: GET /alerts
 
 ---
 
-## 👨‍💻 Author
-
-Mohammed Niyas
-
----
-
 ## ⭐ If you like this project, give it a star!
