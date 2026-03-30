@@ -139,13 +139,6 @@ Use: GET /alerts
 
 ---
 
-## ⚠️ Limitations
-
-* Cannot see exact video/content due to HTTPS encryption
-* Classification is based on metadata (DNS, ports)
-
----
-
 ## 📌 Future Improvements
 
 * Web dashboard (React)
