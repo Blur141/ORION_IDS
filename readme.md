@@ -14,7 +14,6 @@ It captures live network packets, classifies traffic (video, music, normal brows
 
   * ARP Spoofing
   * Credential leaks
-* 🔴 Live monitoring support (WebSocket ready)
 * ▶ Start / Stop control via API
 
 ---
