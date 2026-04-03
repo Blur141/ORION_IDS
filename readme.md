@@ -1,5 +1,4 @@
-# 🛡️ Operational Reconnaissance & Intelligent Observation Network
-## ORION
+# 🛡️ Operational Reconnaissance & Intelligent Observation Network - ORION
 
 A beginner-friendly backend project built with **FastAPI** and **Scapy** that captures live network packets, classifies traffic in real time, and detects basic network attacks — all accessible via REST APIs and a live WebSocket stream.
 
