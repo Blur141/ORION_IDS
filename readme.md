@@ -82,7 +82,6 @@ This project is designed to be **beginner-friendly**. Every file is heavily comm
 | [Uvicorn](https://www.uvicorn.org/) | 0.30 | ASGI server that runs FastAPI |
 | [Scapy](https://scapy.net/) | 2.5 | Network packet capture and analysis |
 | [WebSockets](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API) | Built-in | Real-time bidirectional communication |
-| [Docker](https://www.docker.com/) | Latest | Containerisation and deployment |
 | [Npcap](https://npcap.com/) | Latest | Windows packet capture driver (required) |
 
 ---
