@@ -114,7 +114,7 @@ ids_project/
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/ORION_IDS.git
+git clone https://github.com/Blur141/ORION_IDS.git
 cd ORION_IDS/ids_project
 ```
 
