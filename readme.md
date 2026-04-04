@@ -1,6 +1,7 @@
 <div align="center">
 
-<h1>🛡️ ORION IDS</h1>
+<h1>🛡️ Operational Reconnaissance & Intelligent
+Observation Network - ORION</h1>
 
 <p><strong>Real-Time Packet Classification & Intrusion Detection System</strong></p>
 
