@@ -36,11 +36,10 @@
 9. [Capture Modes](#-capture-modes)
 10. [API Endpoints](#-api-endpoints)
 11. [WebSocket Usage](#-websocket-usage)
-12. [Docker Setup](#-docker-setup)
-13. [Testing the Endpoints](#-testing-the-endpoints)
-14. [Known Limitations](#-known-limitations)
-15. [Future Plans](#-future-plans)
-16. [Contributing](#-contributing)
+12. [Testing the Endpoints](#-testing-the-endpoints)
+13. [Known Limitations](#-known-limitations)
+14. [Future Plans](#-future-plans)
+15. [Contributing](#-contributing)
 17. [License](#-license)
 
 ---
@@ -366,59 +365,6 @@ ws.onclose = () => console.log("🔌 Disconnected");
 | `timestamp` | `2026-04-04T12:00:00` | Exact time the packet was captured |
 
 ---
-
-## 🐳 Docker Setup
-
-> ⚠️ Docker runs in **simulation mode only**. The Docker container is isolated from your host machine's network, so Scapy cannot see your browser's real traffic. Use Docker to explore the API and WebSocket. Use local run for real packet capture.
-
-### Step 1 — Install Docker Desktop
-
-Download from [docker.com](https://www.docker.com/products/docker-desktop/) and install. On Windows, follow the WSL 2 prompt.
-
-Verify the installation:
-```bash
-docker --version
-docker run hello-world
-```
-
-### Step 2 — Build the Image
-
-```bash
-docker build -t orion-ids .
-```
-
-### Step 3 — Run the Container
-
-```bash
-docker run --privileged -p 8000:8000 --rm --name orion orion-ids
-```
-
-| Flag | Meaning |
-|---|---|
-| `--privileged` | Grants network permissions to Scapy |
-| `-p 8000:8000` | Maps port 8000 on your machine to port 8000 in the container |
-| `--rm` | Automatically removes the container when stopped |
-| `--name orion` | Names the container for easy reference |
-
-### Step 4 — Open the App
-
-```
-http://localhost:8000/docs
-```
-
-### Step 5 — Stop It
-
-Press `Ctrl+C` in the terminal. The container is removed automatically.
-
-### Useful Docker Commands
-
-```bash
-docker ps                    # see running containers
-docker logs -f orion         # follow live logs
-docker exec -it orion bash   # open a shell inside the container
-docker stop orion            # stop the container
-docker rmi orion-ids         # delete the image
-```
 
 ---
 
