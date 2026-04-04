@@ -366,8 +366,6 @@ ws.onclose = () => console.log("🔌 Disconnected");
 
 ---
 
----
-
 ## 🧪 Testing the Endpoints
 
 ### Option 1 — Interactive Docs (Easiest)
