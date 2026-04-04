@@ -70,7 +70,6 @@ This project is designed to be **beginner-friendly**. Every file is heavily comm
 | 📡 **WebSocket Stream** | Real-time push of every packet and alert to connected clients |
 | 🗂️ **Connection Logger** | Logs every API request with IP address, endpoint, and timestamp |
 | 🔬 **Debug Endpoints** | Inspect the DNS table, manually seed domains, re-seed all services |
-| 🐳 **Docker Ready** | Runs in a container (simulation mode) or locally for full live capture |
 
 ---
 
