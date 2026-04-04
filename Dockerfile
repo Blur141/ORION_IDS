@@ -43,4 +43,4 @@ EXPOSE 8000
 # uvicorn = the ASGI server that runs FastAPI apps
 # --host 0.0.0.0 = accept connections from outside the container
 # --port 8000 = listen on port 8000
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "ids_project.main:app", "--host", "0.0.0.0", "--port", "8000"]

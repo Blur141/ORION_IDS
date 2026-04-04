@@ -20,9 +20,10 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-import ids_project.storage as storage
-import ids_project.sniffer as sniffer
-from ids_project.state import sniffer_state
+import storage
+import sniffer
+import classifier
+from state import sniffer_state
 
 # -----------------------------------------------------------
 # WebSocket Connection Manager
@@ -292,9 +293,114 @@ async def get_connections():
 async def get_status():
     return {
         "sniffer_running":   sniffer_state["running"],
+        "capture_mode":      sniffer.capture_mode,
         "packets_captured":  len(storage.get_packets()),
         "alerts_triggered":  len(storage.get_alerts()),
-        "ws_clients_online": len(manager.active_connections)
+        "ws_clients_online": len(manager.active_connections),
+        "active_interface":  sniffer.active_interface or "auto (default)",
+        "dns_table_size":    len(classifier.ip_category_table),
+        "tip": "If capture_mode is simulation, run locally as Admin (not Docker) for live packets."
+    }
+
+
+# -----------------------------------------------------------
+# GET /debug/dns-table  — See what IPs have been classified
+# -----------------------------------------------------------
+@app.get("/debug/dns-table", summary="View the live DNS→IP classification table")
+async def get_dns_table():
+    """
+    Shows the current IP→category mapping table.
+
+    USE THIS TO DIAGNOSE why packets are being classified
+    as 'other' instead of 'video' or 'music'.
+
+    If you open YouTube and your packets show [other]:
+      1. Call this endpoint
+      2. Check if any IPs map to "video"
+      3. If the table is empty → DNS seeding failed
+      4. Use POST /debug/seed-dns?domain=googlevideo.com to fix
+
+    Returns a dict like:
+      { "142.250.80.46": "video", "35.186.224.25": "music", ... }
+    """
+    table = classifier.ip_category_table
+    video_ips = [ip for ip, cat in table.items() if cat == "video"]
+    music_ips = [ip for ip, cat in table.items() if cat == "music"]
+
+    return {
+        "total_entries":  len(table),
+        "video_ip_count": len(video_ips),
+        "music_ip_count": len(music_ips),
+        "full_table":     table,
+        "tip": "If total_entries is 0, call POST /debug/seed-dns?domain=youtube.com"
+    }
+
+
+# -----------------------------------------------------------
+# POST /debug/seed-dns  — Manually seed a domain's IPs
+# -----------------------------------------------------------
+@app.post("/debug/seed-dns", summary="Manually resolve and seed a domain into the DNS table")
+async def seed_dns(domain: str):
+    """
+    Manually resolves a domain and adds its IPs to the
+    classification table.
+
+    THIS IS THE FIX FOR DOCKER:
+    When running in Docker, the container can't see your
+    browser's DNS queries. Call this endpoint to manually
+    seed the important domains.
+
+    Examples to call:
+      POST /debug/seed-dns?domain=youtube.com
+      POST /debug/seed-dns?domain=googlevideo.com
+      POST /debug/seed-dns?domain=spotify.com
+      POST /debug/seed-dns?domain=scdn.co
+
+    After calling these, packets to those IPs will be
+    classified as "video" or "music" correctly.
+    """
+    ips = sniffer.seed_dns_for_domain(domain)
+
+    if not ips:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "error": f"Could not resolve '{domain}'.",
+                "tip": "Check the domain spelling. Some CDN domains may not resolve directly."
+            }
+        )
+
+    return {
+        "domain":       domain,
+        "resolved_ips": ips,
+        "category":     classifier.ip_category_table.get(ips[0], "unknown"),
+        "message":      f"✅ {len(ips)} IPs added to classification table."
+    }
+
+
+# -----------------------------------------------------------
+# POST /debug/reseed  — Re-run the full streaming service seed
+# -----------------------------------------------------------
+@app.post("/debug/reseed", summary="Re-seed all streaming service IPs")
+async def reseed_all():
+    """
+    Re-runs the full DNS seeding for all known streaming services.
+    Useful if classification stops working or the table gets stale.
+
+    Resolves: YouTube, Twitch, Netflix, Spotify, SoundCloud,
+    Disney+, Vimeo, TikTok, Deezer, Apple Music, and more.
+    """
+    old_count = len(classifier.ip_category_table)
+    sniffer.seed_common_services()
+    new_count = len(classifier.ip_category_table)
+
+    return {
+        "status":          "reseeded",
+        "ips_before":      old_count,
+        "ips_after":       new_count,
+        "new_ips_added":   new_count - old_count,
+        "active_interface": sniffer.active_interface or "auto",
+        "message":         f"✅ DNS table refreshed. {new_count} total IPs mapped."
     }
 
 

@@ -30,7 +30,7 @@
 # We scan HTTP packet payloads for keywords like "password=".
 # -----------------------------------------------------------
 
-import ids_project.storage as storage   # we save alerts here
+import storage   # we save alerts here
 
 # Tracks: IP address → MAC address (for ARP table)
 arp_table = {}
