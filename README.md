@@ -1,291 +1,348 @@
-# 🛡️ NetGuard IDS — Real-Time Intrusion Detection System
+# 🛡️ Operational Reconnaissance & Intelligent Observation Network - ORION
 
-A production-ready, real-time network Intrusion Detection System built with Python, FastAPI, Scapy, WebSockets, and React.
+**A real-time Network Intrusion Detection System with a live web dashboard.**
+
+NetGuard captures every packet on your network interface — exactly like Wireshark — analyzes them for threats using a stateful rule-based engine, and streams everything live to a React dashboard over WebSocket. It identifies 80+ services (YouTube, WhatsApp, Google Meet, Netflix, Discord, etc.), categorizes traffic into 14 types, and fires precise security alerts without false-positive noise.
+
+![Dashboard Screenshot](/home/blur/project/netguard-ids/docsDashboard1.png)
+![Dashboard Screenshot](/home/blur/project/netguard-ids/docsDashboard2.png)
+![Dashboard Screenshot](/home/blur/project/netguard-ids/docsDashboard3.png)
+
 
 ---
 
-## 📐 Architecture Overview
+## ✨ Features
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        NetGuard IDS                             │
-│                                                                 │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────────┐  │
-│  │  Scapy       │    │  Detection   │    │  FastAPI         │  │
-│  │  Packet      │───▶│  Engine      │───▶│  REST + WS       │  │
-│  │  Capture     │    │  (8 rules)   │    │  Backend         │  │
-│  └──────────────┘    └──────────────┘    └────────┬─────────┘  │
-│         │                   │                     │            │
-│  Live / Simulated     SQLite DB             WebSocket          │
-│  Network Traffic      Persistence           Broadcast          │
-│                                                  │             │
-│                                        ┌─────────▼──────────┐  │
-│                                        │  React Dashboard   │  │
-│                                        │  Live Feed         │  │
-│                                        │  Alerts Panel      │  │
-│                                        │  Analytics Charts  │  │
-│                                        └────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
-```
+- **Wireshark-grade live capture** — Scapy in promiscuous mode, all protocols (TCP, UDP, ICMP, ARP, DNS, HTTP, HTTPS, IPv6)
+- **TLS SNI extraction** — identifies HTTPS destinations without decrypting traffic
+- **Service identification** — 5-tier resolution: TLS SNI → DNS query → reverse DNS → IP prefix → port
+- **80+ known services** — Google, YouTube, WhatsApp, Netflix, Spotify, Discord, Slack, Zoom, GitHub, and more
+- **14 traffic categories** — Streaming, Social, VoIP, Messaging, Cloud/CDN, DNS, LAN/Local, Security, and more
+- **9 attack detectors** — ARP Spoofing, SYN Flood, Port Scan, ICMP Flood, DNS Tunneling, Credential Leakage, Brute Force, Low TTL Anomaly, Sensitive Port Access
+- **Zero false-positive design** — Docker, NTP, mDNS, SSDP and other benign LAN protocols are never flagged
+- **WebSocket live feed** — sub-100ms packet streaming to the browser
+- **REST API** — query events, alerts, stats, and analytics
+- **SQLite persistence** — all packets and alerts stored for historical queries
+- **Simulation mode** — works without root/Scapy for UI development
+- **Start / Stop / Reset** controls from the dashboard
 
 ---
 
 ## 🗂️ Project Structure
 
 ```
-ids-project/
+netguard-ids/
 ├── backend/
-│   ├── main.py                  # FastAPI app — REST API + WebSocket
-│   ├── requirements.txt
-│   ├── Dockerfile
+│   ├── main.py                  # FastAPI app — REST API + WebSocket server
 │   ├── core/
 │   │   ├── capture.py           # Scapy packet capture engine
-│   │   ├── detector.py          # Detection rules (8 attack types)
-│   │   └── engine.py            # Orchestrator — ties everything together
+│   │   ├── detector.py          # Rule-based threat detection engine
+│   │   └── engine.py            # Orchestration — capture → detect → broadcast
 │   └── db/
-│       └── database.py          # SQLAlchemy models + async SQLite
+│       └── database.py          # SQLAlchemy async DB models + session
 │
-├── frontend/
-│   ├── src/
-│   │   ├── App.jsx              # Main dashboard — 3 tabs
-│   │   ├── App.css              # Dark cybersecurity aesthetic
-│   │   ├── index.js
-│   │   └── hooks/
-│   │       └── useIDSWebSocket.js  # Real-time WS data hook
-│   ├── public/index.html
-│   ├── package.json
-│   ├── Dockerfile
-│   └── nginx.conf
-│
-├── docker-compose.yml
-└── README.md
+└── frontend/
+    └── src/
+        ├── App.jsx              # Main React UI — tabs, table, alerts, charts
+        ├── App.css              # Dark theme styles
+        ├── index.js             # React entry point
+        ├── hooks/
+        │   └── useIDSWebSocket.js   # WebSocket hook with throttling + reconnect
+        └── utils/
+            ├── serviceResolver.js   # 5-tier service identification
+            └── classifier.js        # 14-category traffic classifier
 ```
-
----
-
-## 🔍 Detected Attack Types
-
-| Attack               | Method                                      | Severity    |
-|----------------------|---------------------------------------------|-------------|
-| **ARP Spoofing**     | IP→MAC mapping change detection             | Malicious   |
-| **Port Scan**        | SYN-only packets to 15+ unique ports        | Malicious   |
-| **SYN Flood**        | 50+ SYN/sec from single source              | Malicious   |
-| **Brute Force**      | 10+ connection attempts in 5s to auth port  | Malicious   |
-| **Credential Leak**  | Plaintext passwords/API keys in HTTP        | Malicious   |
-| **ICMP Flood**       | 30+ ICMP packets/sec from single source     | Malicious   |
-| **DNS Tunneling**    | High DNS query rate (20+/sec)               | Suspicious  |
-| **DNS Anomaly**      | DGA-like domains, high-risk TLDs            | Suspicious  |
-| **Low TTL**          | TTL ≤ 5 (spoofed/tunneled packets)          | Suspicious  |
-| **Sensitive Ports**  | Access to SSH, RDP, DB, backdoor ports      | Suspicious  |
 
 ---
 
 ## 🚀 Quick Start
 
-### Option 1 — Docker (Recommended)
+### Prerequisites
 
-```bash
-git clone https://github.com/your-org/ids-project
-cd ids-project
+| Tool | Version |
+|------|---------|
+| Python | 3.11+ |
+| Node.js | 18+ |
+| Scapy | `pip install scapy` |
+| Root / Admin | Required for raw socket capture |
 
-# Start everything
-docker-compose up --build
-
-# Dashboard: http://localhost:3000
-# API:       http://localhost:8000
-# API Docs:  http://localhost:8000/docs
-```
-
-> **Note:** Live packet capture requires `--privileged` or the `NET_RAW` + `NET_ADMIN` capabilities (already set in docker-compose.yml). Without root, the system auto-falls back to simulation mode.
-
----
-
-### Option 2 — Manual Setup
-
-#### Backend
+### 1 — Backend
 
 ```bash
 cd backend
 
-# Create virtual environment
-python3 -m venv venv
-source venv/bin/activate          # Windows: venv\Scripts\activate
-
 # Install dependencies
-pip install -r requirements.txt
+pip install fastapi uvicorn sqlalchemy aiosqlite scapy
 
-# Run (simulation mode, no root required)
-uvicorn main:app --reload --port 8000
-
-# Run with live capture (requires root/sudo)
-sudo uvicorn main:app --reload --port 8000
+# Run with root (required for live capture)
+sudo uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-#### Frontend
+> **Windows:** Run your terminal as Administrator instead of `sudo`.
+
+### 2 — Frontend
 
 ```bash
 cd frontend
+
+# Install dependencies
 npm install
-npm start          # Opens http://localhost:3000
+
+# Start dev server
+npm start
 ```
 
----
-
-## 📡 API Reference
-
-### REST Endpoints
-
-| Method | Endpoint                          | Description                        |
-|--------|-----------------------------------|------------------------------------|
-| GET    | `/api/status`                     | Engine status + live stats         |
-| GET    | `/api/stats`                      | Packet counts, protocol mix        |
-| GET    | `/api/events?limit=100`           | Recent network events from DB      |
-| GET    | `/api/events?severity=malicious`  | Filter events by severity          |
-| GET    | `/api/alerts?unacknowledged=true` | Get unacknowledged alerts          |
-| PATCH  | `/api/alerts/{id}/acknowledge`    | Acknowledge an alert               |
-| GET    | `/api/analytics/timeline?hours=1` | Severity counts over time          |
-| POST   | `/api/control/start`              | Start capture engine               |
-| POST   | `/api/control/stop`               | Stop capture engine                |
-
-All docs available at `http://localhost:8000/docs` (Swagger UI).
+Open [http://localhost:3000](http://localhost:3000) — the dashboard connects automatically.
 
 ---
 
-### WebSocket — `ws://localhost:8000/ws`
+## ⚙️ Configuration
 
-Clients receive three message types:
+### Environment Variables (Frontend)
 
-```jsonc
-// On connect: full initial state
-{ "type": "init",   "data": { "recent_packets": [...], "recent_alerts": [...], "stats": {...} } }
-
-// Every packet processed
-{ "type": "packet", "data": { "src_ip": "...", "dst_ip": "...", "severity": "info", ... } }
-
-// New alert (rate-limited: max 1 per 10s per IP+type)
-{ "type": "alert",  "data": { "alert_type": "SYN Flood", "severity": "malicious", ... } }
-
-// Stats broadcast every 2 seconds
-{ "type": "stats",  "data": { "total_packets": 1234, "bandwidth_bps": 45000, ... } }
-```
-
----
-
-## 🖥️ Dashboard Tabs
-
-### 1. Live Feed
-- Real-time scrolling packet table (protocol, src/dst IP:port, size, severity, attack type)
-- Filter by severity: All / Normal / Suspicious / Malicious
-- Inline alert panel with acknowledge button
-
-### 2. Alerts
-- Full alert log grid
-- Color-coded by severity (red = malicious, yellow = suspicious)
-- One-click acknowledge
-
-### 3. Analytics
-- **Traffic Timeline** — bandwidth KB/s over rolling 30-point window
-- **Threat Activity** — stacked bar chart of Normal/Suspicious/Malicious
-- **Protocol Mix** — donut chart of traffic breakdown
-- **Top Source IPs** — ranked bar chart
-
----
-
-## ⚙️ Capture Modes
-
-| Mode           | When                                         | Notes                        |
-|----------------|----------------------------------------------|------------------------------|
-| **Live**       | Root/admin + Scapy installed + interface up  | Captures real network traffic |
-| **Simulation** | No root, or Scapy unavailable                | Generates realistic synthetic traffic including injected attack patterns |
-
-The system detects privileges automatically and falls back gracefully. You will see the mode label ("live" / "simulation") in the dashboard header.
-
----
-
-## 🔧 Configuration
-
-Set via environment variables or `.env`:
+Create a `.env` file in `frontend/`:
 
 ```env
-# Backend
-IDS_INTERFACE=eth0          # Network interface (default: system default)
-IDS_DB_URL=sqlite+aiosqlite:///./ids_events.db
-
-# Frontend
 REACT_APP_WS_URL=ws://localhost:8000/ws
 REACT_APP_API_URL=http://localhost:8000
 ```
 
+### Network Interface
+
+The backend auto-detects the best interface (Wi-Fi preferred over Ethernet, virtual interfaces excluded). To override:
+
+```python
+# in backend/main.py
+ids_engine = IDSEngine(interface="eth0")   # Linux
+ids_engine = IDSEngine(interface="en0")    # macOS
+ids_engine = IDSEngine(interface="Wi-Fi")  # Windows
+```
+
+To list all available interfaces:
+
+```python
+from core.capture import get_available_interfaces
+print(get_available_interfaces())
+```
+
+### BPF Filter
+
+To exclude noisy traffic (e.g. SSH connections to your own machine):
+
+```python
+# in backend/core/engine.py → PacketCapture(...)
+PacketCapture(interface=best_iface, bpf_filter="not port 22")
+```
+
 ---
 
-## 🧩 Extending the System
+## 📡 How It Works
 
-### Add a New Detector
+### Capture Pipeline
 
-Open `backend/core/detector.py` and add a method to `DetectionEngine`:
+```
+Network Interface (promiscuous mode)
+        │
+        ▼
+  Scapy sniff()  ──────────────────────── daemon thread
+        │
+        ▼
+  _parse_packet()   ← extracts IP, TCP/UDP, DNS, ARP, TLS SNI, HTTP payload
+        │
+        ▼
+  Queue (10,000 packet buffer)
+        │
+        ▼
+  process_loop()    ← async consumer
+        │
+        ├──► DetectionEngine.analyze()   → DetectionResult (severity + attack type)
+        │
+        ├──► WebSocket broadcast         → React dashboard (real-time)
+        │
+        └──► SQLite persist              → historical queries via REST API
+```
+
+### Service Resolution (5-Tier)
+
+For every packet, `serviceResolver.js` tries in order:
+
+1. **TLS SNI** — extracted from the raw ClientHello bytes; identifies HTTPS destinations with 100% accuracy
+2. **DNS query** — identifies the domain being looked up; covers DNS traffic before the connection
+3. **Reverse-DNS hostname** — `src_hostname` / `dst_hostname` from OS resolver cache
+4. **IP prefix** — maps known CDN/cloud IP ranges (Google `142.250.x`, Cloudflare `104.16.x`, Apple `17.x`, etc.)
+5. **Port** — last resort fallback (e.g. port 443 → HTTPS, port 22 → SSH)
+
+### Traffic Categories (14 Types)
+
+| Category | Examples |
+|----------|---------|
+| 🎬 Streaming | YouTube, Netflix, Spotify, Twitch, Disney+ |
+| 👥 Social | Facebook, Instagram, Twitter/X, Reddit, LinkedIn |
+| 📹 VoIP / Video | Google Meet, Zoom, Discord, MS Teams, Skype |
+| 💬 Messaging | WhatsApp, Telegram, Signal, Slack |
+| ☁️ Cloud / CDN | AWS, Cloudflare, Akamai, Fastly, iCloud |
+| 🌐 Web Browsing | Unknown HTTPS/HTTP to external IPs |
+| ⚙️ System / OS | Windows Update, Apple telemetry, NTP, analytics |
+| 🔍 DNS | DNS queries and responses |
+| 🏠 LAN / Local | ARP, mDNS, SSDP, SMB, Docker internal |
+| 🔐 Security / VPN | VPN services, PKI/OCSP, IKE |
+| 🗄️ Database | MySQL, PostgreSQL, Redis, MongoDB |
+| 🛠️ Dev Tools | GitHub, SSH, npm, GitLab, Claude AI |
+| ❓ Other | Unclassified traffic |
+
+### Threat Detectors
+
+| Detector | Trigger | Severity |
+|----------|---------|----------|
+| **ARP Spoofing** | IP→MAC mapping changes | Malicious |
+| **SYN Flood** | ≥100 SYN packets/sec from same IP | Malicious |
+| **Port Scan** | ≥20 unique ports probed (external→external) | Suspicious / Malicious |
+| **ICMP Flood** | ≥50 ICMP packets/sec from same IP | Malicious |
+| **DNS Tunneling** | ≥30 DNS queries/sec from same IP | Suspicious |
+| **DNS Anomaly** | DGA patterns, high-risk TLDs, C2 keywords | Suspicious |
+| **Credential Leakage** | Passwords / API keys in plaintext HTTP | Malicious |
+| **Brute Force** | ≥15 SYNs to auth port (external source) | Malicious |
+| **Low TTL Anomaly** | TCP TTL ≤ 3 from external IP | Suspicious |
+| **Sensitive Port Access** | External IP connecting to backdoor ports | Suspicious / Malicious |
+
+#### False Positive Prevention
+
+A major design goal is **zero noise from legitimate traffic**:
+
+- TTL anomaly fires **only on TCP** — NTP, mDNS, SSDP, and Docker all use TTL=1 on UDP legitimately
+- Port scan skips **LAN→LAN** — SMB discovery, Bonjour, and printer detection are normal
+- Brute force only flags **external source IPs** — local SSH/DB access is expected
+- Sensitive port alerts exclude **80+ benign ports** (DNS/53, NTP/123, DHCP/67-68, SSDP/1900, etc.)
+- DNS anomaly has an **extensive whitelist** of known-safe domains + `.local`, `.internal`, `.lan` suffixes
+- ARP anomaly ignores **Docker virtual MAC prefixes** (`02:xx`, `0a:xx`, `52:xx`)
+
+---
+
+## 🔌 REST API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/status` | Engine status + current stats |
+| `GET` | `/api/stats` | Packet counts, bandwidth, protocol distribution |
+| `GET` | `/api/events` | Recent network events (filterable by severity, protocol, IP) |
+| `GET` | `/api/alerts` | Security alerts (filterable by severity, acknowledged) |
+| `PATCH` | `/api/alerts/{id}/acknowledge` | Acknowledge an alert |
+| `GET` | `/api/analytics/timeline` | Severity counts over last N hours |
+| `POST` | `/api/control/start` | Start packet capture |
+| `POST` | `/api/control/stop` | Stop packet capture |
+| `POST` | `/api/control/reset` | Reset all counters and buffers |
+| `WS` | `/ws` | Live WebSocket stream (packets, alerts, stats) |
+
+### WebSocket Message Types
+
+```jsonc
+// Server → Client
+{ "type": "init",   "data": { "recent_packets": [...], "recent_alerts": [...], "stats": {...} } }
+{ "type": "packet", "data": { "src_ip": "...", "dst_ip": "...", "protocol": "HTTPS", ... } }
+{ "type": "alert",  "data": { "alert_type": "Port Scan", "severity": "suspicious", ... } }
+{ "type": "stats",  "data": { "total_packets": 12400, "bandwidth_bps": 204800, ... } }
+{ "type": "ping" }
+```
+
+---
+
+## 🖥️ Dashboard
+
+### Live Feed Tab
+- Real-time packet table with time, protocol, source, destination, service badge, size, severity, attack type, and category
+- Search across all fields (IP, hostname, service name, protocol, attack type)
+- Filter by category (14 types) and severity
+- Color-coded rows: yellow border = suspicious, red border = malicious
+
+### Alerts Tab
+- All security alerts in a card grid
+- One-click acknowledge per alert
+- Unacknowledged count shown in tab badge
+
+### Analytics Tab
+- **Traffic Timeline** — rolling bandwidth chart (KB/s over last 30 samples)
+- **Threat Activity** — stacked bar chart of Normal / Suspicious / Malicious counts
+- **Protocol Mix** — donut chart of protocol distribution
+- **Top Source IPs** — horizontal bar chart of most active sources
+
+---
+
+## 🛠️ Development
+
+### Running Without Root (Simulation Mode)
+
+If Scapy is not installed or you lack root privileges, the engine automatically falls back to simulation mode — generating realistic synthetic traffic so the UI stays fully usable during development.
+
+```bash
+# No sudo needed — simulation kicks in automatically
+uvicorn main:app --reload
+```
+
+The mode badge in the top-right corner of the dashboard shows `live` or `simulation`.
+
+### Adding a New Service
+
+Edit `frontend/src/utils/serviceResolver.js` — add an entry to `DOMAIN_MAP`:
+
+```javascript
+{ match: ["example.com", "cdn.example.com"], name: "Example", emoji: "🔥", color: "#FF6B6B" },
+```
+
+### Adding a New Detector
+
+Edit `backend/core/detector.py` — implement a method and register it:
 
 ```python
 def _check_my_attack(self, packet: dict) -> Optional[DetectionResult]:
-    if packet.get("protocol") != "TCP":
-        return None
-    # Your detection logic here
-    return DetectionResult(
-        severity="suspicious",
-        attack_type="My Attack",
-        description="...",
-        score=70.0,
-    )
+    # your logic here
+    return DetectionResult(severity="suspicious", attack_type="My Attack", description="...", score=70.0)
+
+# Add to the detectors list in analyze():
+detectors = [..., self._check_my_attack]
 ```
 
-Then register it in the `analyze()` method's `detectors` list.
+---
 
-### Add Machine Learning
+## 📦 Dependencies
 
-The `DetectionResult` includes a `score` (0–100) field. You can:
+### Backend
 
-1. Log feature vectors (TTL, size, port, flag, rate) to a CSV.
-2. Train a classifier (Random Forest, Isolation Forest for anomaly detection).
-3. Replace or augment `_check_*` methods with model inference.
+| Package | Purpose |
+|---------|---------|
+| `fastapi` | REST API + WebSocket server |
+| `uvicorn` | ASGI server |
+| `sqlalchemy` | Async ORM |
+| `aiosqlite` | Async SQLite driver |
+| `scapy` | Raw packet capture |
 
-Suggested libraries: `scikit-learn`, `river` (online/streaming ML), `tensorflow`.
+### Frontend
+
+| Package | Purpose |
+|---------|---------|
+| `react` | UI framework |
+| `recharts` | Charts (area, bar, pie) |
+| `lucide-react` | Icon set |
 
 ---
 
-## 🔒 Security & Legal
+## 🔒 Security & Privacy Notes
 
-- **Use only on networks you own or have explicit permission to monitor.**
-- Live packet capture captures all traffic on the interface — handle data responsibly.
-- In production, restrict WebSocket/API access with authentication (JWT, API keys).
-- Consider encrypting the SQLite database in sensitive deployments.
-
----
-
-## 📦 Tech Stack
-
-| Layer      | Technology                        |
-|------------|-----------------------------------|
-| Capture    | Scapy 2.6                         |
-| Backend    | Python 3.12, FastAPI, Uvicorn     |
-| Real-time  | WebSockets (native FastAPI)       |
-| Database   | SQLite + SQLAlchemy async         |
-| Frontend   | React 18, Recharts, Lucide Icons  |
-| Deploy     | Docker, Docker Compose, Nginx     |
-
----
-
-## 🗺️ Roadmap
-
-- [ ] JWT authentication for API/dashboard
-- [ ] Email / Slack / webhook alert notifications
-- [ ] Machine learning anomaly detection (Isolation Forest)
-- [ ] PCAP file import and offline analysis
-- [ ] GeoIP enrichment (MaxMind)
-- [ ] Multi-interface support
-- [ ] Grafana integration via Prometheus metrics
-- [ ] Suricata rule import compatibility
+- **Root privileges** are required for raw socket capture. Always run in a trusted environment.
+- **No traffic is sent externally** — all capture and analysis happens locally.
+- **HTTP payloads** are inspected for credential leakage but never stored in full — only the first 800 bytes are kept in memory for detection, not persisted to the database.
+- **TLS/HTTPS traffic is not decrypted** — only the SNI hostname (sent in plaintext during the TLS handshake) is extracted.
 
 ---
 
 ## 📄 License
 
-MIT — free to use, extend, and deploy.
+MIT License — see [LICENSE](LICENSE) for details.
+
+---
+
+## 🙏 Acknowledgements
+
+- [Scapy](https://scapy.net/) — the engine behind live packet capture
+- [FastAPI](https://fastapi.tiangolo.com/) — the backend framework
+- [Recharts](https://recharts.org/) — dashboard charts
+- [Lucide](https://lucide.dev/) — dashboard icons
