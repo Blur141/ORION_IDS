@@ -339,7 +339,7 @@ MIT License — see [LICENSE](LICENSE) for details.
 
 ---
 
-## 🙏 Acknowledgements
+## Acknowledgements
 
 - [Scapy](https://scapy.net/) — the engine behind live packet capture
 - [FastAPI](https://fastapi.tiangolo.com/) — the backend framework
