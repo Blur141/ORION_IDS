@@ -4,10 +4,9 @@
 
 NetGuard captures every packet on your network interface — exactly like Wireshark — analyzes them for threats using a stateful rule-based engine, and streams everything live to a React dashboard over WebSocket. It identifies 80+ services (YouTube, WhatsApp, Google Meet, Netflix, Discord, etc.), categorizes traffic into 14 types, and fires precise security alerts without false-positive noise.
 
-![Dashboard Screenshot](/home/blur/project/netguard-ids/docsDashboard1.png)
-![Dashboard Screenshot](/home/blur/project/netguard-ids/docsDashboard2.png)
-![Dashboard Screenshot](/home/blur/project/netguard-ids/docsDashboard3.png)
-
+![Live Feed](docs/Dashboard1.png)
+![Alerts](docs/Dashboard2.png)
+![Analytics](docs/Dashboard3.png)
 
 ---
 
