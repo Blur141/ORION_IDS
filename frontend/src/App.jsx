@@ -338,8 +338,8 @@ export default function App() {
           <div className="logo">
             <Shield size={28} className="logo-icon" />
             <div>
-              <span className="logo-title">NETGUARD IDS</span>
-              <span className="logo-sub">Intrusion Detection System</span>
+              <span className="logo-title">ORION</span>
+              <span className="logo-sub">Operational Reconnaissance & Intelligent Observation Network</span>
             </div>
           </div>
         </div>

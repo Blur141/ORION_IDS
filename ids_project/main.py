@@ -101,7 +101,7 @@ async def lifespan(app: FastAPI):
 # -----------------------------------------------------------
 app = FastAPI(
     title="Real-Time IDS System",
-    description="Packet Classification & Intrusion Detection System",
+    description="Packet Classification & Operational Reconnaissance & Intelligent Observation Network",
     version="1.0.0",
     lifespan=lifespan
 )
